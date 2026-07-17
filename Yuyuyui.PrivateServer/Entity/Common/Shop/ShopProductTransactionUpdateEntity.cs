@@ -24,18 +24,30 @@ namespace Yuyuyui.PrivateServer
             long transactionId = long.Parse(GetPathParameter("transaction_id"));
             PlayerProfile player = GetPlayerFromCookies();
 
-            if (productId == 0 && player.transactions.shopProductTransactions.TryGetValue(transactionId, out var storedTransaction))
+            if (!player.transactions.shopProductTransactions.TryGetValue(transactionId, out var storedTransaction))
+                throw new APIErrorException("A1321", $"Unknown shop transaction {transactionId}.");
+
+            if (productId == 0)
             {
                 shopId = storedTransaction.shop_id;
                 productId = storedTransaction.product_id;
             }
+            else if (storedTransaction.shop_id != shopId || storedTransaction.product_id != productId)
+            {
+                throw new APIErrorException("A1321", $"Shop transaction {transactionId} does not match product {shopId}/{productId}.");
+            }
 
             ShopProduct product = FindProduct(shopId, productId);
 
-            DeductCurrency(player, product);
-            GrantProduct(player, product);
-            player.transactions.shopProductTransactions.Remove(transactionId);
-            player.Save();
+            if (!storedTransaction.completed)
+            {
+                if (!DeductCurrency(player, product))
+                    throw new APIErrorException("A1321", $"Not enough currency to purchase shop product {shopId}/{productId}.");
+
+                GrantProduct(player, product);
+                storedTransaction.completed = true;
+                player.Save();
+            }
 
             Response responseObj = new()
             {
@@ -124,22 +136,28 @@ namespace Yuyuyui.PrivateServer
             existingItem.Save();
         }
 
-        private static void DeductCurrency(PlayerProfile player, ShopProduct product)
+        private static bool DeductCurrency(PlayerProfile player, ShopProduct product)
         {
             if (Config.Get().InGame.InfiniteItems)
-                return;
+                return true;
 
             switch (product.ConsumptionResourceId)
             {
                 case 4:
-                    player.data.money = Math.Max(0, player.data.money - product.Price);
-                    break;
+                    if (player.data.money < product.Price)
+                        return false;
+
+                    player.data.money -= product.Price;
+                    return true;
                 case 8:
-                    player.data.braveCoin = Math.Max(0, player.data.braveCoin - product.Price);
-                    break;
+                    if (player.data.braveCoin < product.Price)
+                        return false;
+
+                    player.data.braveCoin -= product.Price;
+                    return true;
                 default:
                     Utils.LogWarning($"Shop product uses unsupported consumption resource {product.ConsumptionResourceId}; no currency was deducted.");
-                    break;
+                    return false;
             }
         }
 

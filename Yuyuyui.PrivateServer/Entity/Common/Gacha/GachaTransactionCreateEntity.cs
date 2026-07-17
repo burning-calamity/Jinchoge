@@ -18,11 +18,23 @@ namespace Yuyuyui.PrivateServer
 
         protected override Task ProcessRequest()
         {
+            var player = GetPlayerFromCookies();
+            long gachaId = long.Parse(GetPathParameter("gacha_id"));
+            long lineupId = long.Parse(GetPathParameter("lineup_id"));
+            long transactionId = long.Parse(Utils.GenerateRandomDigit(8));
+
+            player.transactions.gachaTransactions[transactionId] = new PlayerProfile.GachaTransaction
+            {
+                gacha_id = gachaId,
+                lineup_id = lineupId
+            };
+            player.Save();
+
             Response responseObj = new()
             {
                 transaction = new()
                 {
-                    id = long.Parse(Utils.GenerateRandomDigit(8))
+                    id = transactionId
                 }
             };
 

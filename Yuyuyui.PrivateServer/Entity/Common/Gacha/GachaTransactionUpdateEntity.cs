@@ -30,6 +30,18 @@ namespace Yuyuyui.PrivateServer
             using var cardsDb = new CardsContext();
             using var itemsDb = new ItemsContext();
 
+            if (!player.transactions.gachaTransactions.TryGetValue(transactionId, out var storedTransaction) ||
+                storedTransaction.gacha_id != gachaId ||
+                storedTransaction.lineup_id != lineupId)
+                throw new APIErrorException("A1321", $"Unknown gacha transaction {transactionId}.");
+
+            if (storedTransaction.completed)
+            {
+                responseBody = Serialize(CreateResponse(transactionId, BuildStoredResults(player, cardsDb, storedTransaction)));
+                SetBasicResponseHeaders();
+                return Task.CompletedTask;
+            }
+
             GachaLineup? lineup = IsSyntheticFallbackLineup(gachaId, lineupId)
                 ? CreateFallbackLineup(gachaId, lineupId)
                 : gachasDb.GachaLineups.FirstOrDefault(l => l.Id == lineupId && l.GachaId == gachaId && l.Sp == 1)
@@ -58,7 +70,26 @@ namespace Yuyuyui.PrivateServer
                 });
             }
 
-            Response responseObj = new()
+            storedTransaction.completed = true;
+            storedTransaction.results = resultContents
+                .Select(result => new PlayerProfile.GachaTransactionResult
+                {
+                    content_id = result.content_id,
+                    is_new = result.is_new
+                })
+                .ToList();
+            player.Save();
+
+            responseBody = Serialize(CreateResponse(transactionId, resultContents));
+            SetBasicResponseHeaders();
+
+            return Task.CompletedTask;
+        }
+
+
+        private static Response CreateResponse(long transactionId, IList<ResultContent> resultContents)
+        {
+            return new Response
             {
                 transaction = new()
                 {
@@ -68,11 +99,27 @@ namespace Yuyuyui.PrivateServer
                     results = resultContents
                 }
             };
+        }
 
-            responseBody = Serialize(responseObj);
-            SetBasicResponseHeaders();
-
-            return Task.CompletedTask;
+        private static IList<ResultContent> BuildStoredResults(
+            PlayerProfile player,
+            CardsContext cardsDb,
+            PlayerProfile.GachaTransaction storedTransaction)
+        {
+            return storedTransaction.results
+                .Select(result =>
+                {
+                    long userCardId = player.GetUserCardIdForMasterId(result.content_id, cardsDb);
+                    return new ResultContent
+                    {
+                        item_category_id = 1,
+                        master_id = result.content_id,
+                        content_id = result.content_id,
+                        card = CardsEntity.Card.FromPlayerCardData(cardsDb, userCardId),
+                        is_new = result.is_new
+                    };
+                })
+                .ToList();
         }
 
         private static IList<GachaContent> RollCards(
