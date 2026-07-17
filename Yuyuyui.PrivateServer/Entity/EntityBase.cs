@@ -134,16 +134,13 @@ namespace Yuyuyui.PrivateServer
                 }
             }
 
-            return new RequestErrorEntity(
-                "S2000",
-                $"\n\nAPI Not Implemented:\n\n{e.HttpClient.Request.Method} {apiPath}",
+            Utils.LogWarning(Resources.LOG_PS_API_NOT_IMPLEMENTED + $"{e.HttpClient.Request.Method} {apiPath}");
+            return new NoopEntity(
                 e.HttpClient.Request.RequestUri,
                 e.HttpClient.Request.Method,
-                new RouteConfig(apiPath, e.HttpClient.Request.Method),
                 headersAndBody.Item1,
                 headersAndBody.Item2,
-                Resources.LOG_PS_API_NOT_IMPLEMENTED + $"{e.HttpClient.Request.Method} {apiPath}"
-            ); // error type
+                new RouteConfig(apiPath, e.HttpClient.Request.Method));
         }
 
         protected abstract Task ProcessRequest();
