@@ -69,7 +69,7 @@ namespace Yuyuyui.PrivateServer
             if (player.items.stamina.TryGetValue(staminaItemId, out long userItemId) && Item.Exists(userItemId))
                 return Item.Load(userItemId);
 
-            if (!player.items.stamina.ContainsValue(staminaItemId) || !Item.Exists(staminaItemId))
+            if (!player.items.stamina.Values.Contains(staminaItemId) || !Item.Exists(staminaItemId))
                 return null;
 
             Item item = Item.Load(staminaItemId);
