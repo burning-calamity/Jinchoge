@@ -83,8 +83,7 @@ internal class SettingsViewModel : ViewModelBase
         .ToList();
     public List<string> AvailableBranches => Config.SupportedUpdateChannel;
     public List<LanguageDisplay> ScenarioLanguages => Config.SupportedInGameScenarioLanguage
-        .Select(CultureInfo.GetCultureInfo)
-        .Select(c => new LanguageDisplay(c))
+        .Select(LanguageDisplay.FromLocale)
         .ToList();
 
     private int interfaceLanguageSelected;
