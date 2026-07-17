@@ -93,15 +93,38 @@ namespace Yuyuyui.PrivateServer
 
         private static Response CreateResponse(long transactionId, IList<ResultContent> resultContents)
         {
+            GachaAnimation animation = CreateAnimation(resultContents);
             return new Response
             {
+                free_rare_gacha = 1,
+                play_animation = true,
+                should_play_animation = true,
+                animation = animation,
+                gacha_animation = animation,
                 transaction = new()
                 {
                     id = transactionId,
                     free_rare_gacha = 1,
                     play_animation = true,
+                    should_play_animation = true,
+                    animation = animation,
+                    gacha_animation = animation,
                     results = resultContents
                 }
+            };
+        }
+
+        private static GachaAnimation CreateAnimation(IList<ResultContent> resultContents)
+        {
+            return new GachaAnimation
+            {
+                type = "free_rare_gacha",
+                name = "free_rare_gacha",
+                effect = "free_rare_gacha",
+                play = true,
+                play_animation = true,
+                free_rare_gacha = 1,
+                lot_count = Math.Max(resultContents.Count, 1)
             };
         }
 
@@ -389,14 +412,33 @@ namespace Yuyuyui.PrivateServer
         public class Response
         {
             public Transaction transaction { get; set; } = new();
+            public int free_rare_gacha { get; set; }
+            public bool play_animation { get; set; }
+            public bool should_play_animation { get; set; }
+            public GachaAnimation animation { get; set; } = new();
+            public GachaAnimation gacha_animation { get; set; } = new();
 
             public class Transaction
             {
                 public long id { get; set; }
                 public int free_rare_gacha { get; set; }
                 public bool play_animation { get; set; }
+                public bool should_play_animation { get; set; }
+                public GachaAnimation animation { get; set; } = new();
+                public GachaAnimation gacha_animation { get; set; } = new();
                 public IList<ResultContent> results { get; set; } = new List<ResultContent>();
             }
+        }
+
+        public class GachaAnimation
+        {
+            public string type { get; set; } = "free_rare_gacha";
+            public string name { get; set; } = "free_rare_gacha";
+            public string effect { get; set; } = "free_rare_gacha";
+            public bool play { get; set; } = true;
+            public bool play_animation { get; set; } = true;
+            public int free_rare_gacha { get; set; } = 1;
+            public int lot_count { get; set; } = 1;
         }
 
         public class ResultContent

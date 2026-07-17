@@ -75,6 +75,14 @@ namespace Yuyuyui.PrivateServer
                 }
 
                 var userCard = Yuyuyui.PrivateServer.Card.Load(entry.Value);
+                if (!cardsDb.Cards.Any(card => card.Id == userCard.master_id))
+                {
+                    Utils.LogWarning($"User card {entry.Value} references missing master card {userCard.master_id}; removing it from /my/cards to avoid client character-load failures.");
+                    player.cards.Remove(entry.Key);
+                    changed = true;
+                    continue;
+                }
+
                 long profileKey = player.GetCardProfileKey(userCard.master_id, cardsDb);
                 if (profileKey == entry.Key)
                     continue;
