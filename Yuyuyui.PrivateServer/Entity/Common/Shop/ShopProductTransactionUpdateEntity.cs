@@ -39,12 +39,18 @@ namespace Yuyuyui.PrivateServer
 
             ShopProduct product = FindProduct(shopId, productId);
 
+            string purchaseKey = GetPurchaseKey(shopId, productId);
             if (!storedTransaction.completed)
             {
+                int purchasedQuantity = GetPurchasedQuantity(player, purchaseKey);
+                if (purchasedQuantity >= product.PurchaseLimitQuantity)
+                    throw new APIErrorException("A1321", $"Purchase limit reached for shop product {shopId}/{productId}.");
+
                 if (!DeductCurrency(player, product))
                     throw new APIErrorException("A1321", $"Not enough currency to purchase shop product {shopId}/{productId}.");
 
                 GrantProduct(player, product);
+                player.transactions.shopProductPurchaseCounts[purchaseKey] = purchasedQuantity + 1;
                 storedTransaction.completed = true;
                 player.Save();
             }
@@ -60,7 +66,7 @@ namespace Yuyuyui.PrivateServer
                     id = productId,
                     item_master_id = product.ItemMasterId,
                     item_category_id = product.ItemCategoryId,
-                    purchased_quantity = 1
+                    purchased_quantity = GetPurchasedQuantity(player, purchaseKey)
                 }
             };
 
@@ -74,17 +80,29 @@ namespace Yuyuyui.PrivateServer
         {
             return (shopId, productId) switch
             {
-                ("C3365", 10093) => new ShopProduct(100040, (int)ItemCategory.Card, 4, 50000),
-                ("C3365", 10094) => new ShopProduct(100140, (int)ItemCategory.Card, 4, 50000),
-                ("C3365", 10095) => new ShopProduct(100140, (int)ItemCategory.Card, 8, 5),
-                ("A3365", 10093) => new ShopProduct(500101, (int)ItemCategory.Accessory, 4, 6000),
-                ("A3365", 10094) => new ShopProduct(500109, (int)ItemCategory.Accessory, 4, 6000),
-                ("A3365", 10095) => new ShopProduct(500091, (int)ItemCategory.Accessory, 4, 8000),
-                ("I3365", 10093) => new ShopProduct(2, (int)ItemCategory.EnhancementItem, 4, 1000),
-                ("I3365", 10094) => new ShopProduct(10310, (int)ItemCategory.EvolutionItem, 4, 1000),
-                ("I3365", 10095) => new ShopProduct(10410, (int)ItemCategory.EvolutionItem, 4, 1000),
+                ("C3365", 10093) => new ShopProduct(100040, (int)ItemCategory.Card, 4, 50000, 5),
+                ("C3365", 10094) => new ShopProduct(100140, (int)ItemCategory.Card, 4, 50000, 5),
+                ("C3365", 10095) => new ShopProduct(100140, (int)ItemCategory.Card, 8, 5, 5),
+                ("A3365", 10093) => new ShopProduct(500101, (int)ItemCategory.Accessory, 4, 6000, 20),
+                ("A3365", 10094) => new ShopProduct(500109, (int)ItemCategory.Accessory, 4, 6000, 20),
+                ("A3365", 10095) => new ShopProduct(500091, (int)ItemCategory.Accessory, 4, 8000, 20),
+                ("I3365", 10093) => new ShopProduct(2, (int)ItemCategory.EnhancementItem, 4, 1000, 20),
+                ("I3365", 10094) => new ShopProduct(10310, (int)ItemCategory.EvolutionItem, 4, 1000, 10),
+                ("I3365", 10095) => new ShopProduct(10410, (int)ItemCategory.EvolutionItem, 4, 1000, 10),
                 _ => throw new APIErrorException("A1321", $"Unknown shop product {shopId}/{productId}")
             };
+        }
+
+        private static string GetPurchaseKey(string shopId, long productId)
+        {
+            return $"{shopId}/{productId}";
+        }
+
+        private static int GetPurchasedQuantity(PlayerProfile player, string purchaseKey)
+        {
+            return player.transactions.shopProductPurchaseCounts.TryGetValue(purchaseKey, out int purchasedQuantity)
+                ? purchasedQuantity
+                : 0;
         }
 
         private static void GrantProduct(PlayerProfile player, ShopProduct product)
@@ -163,18 +181,20 @@ namespace Yuyuyui.PrivateServer
 
         private sealed class ShopProduct
         {
-            public ShopProduct(long itemMasterId, int itemCategoryId, int consumptionResourceId, int price)
+            public ShopProduct(long itemMasterId, int itemCategoryId, int consumptionResourceId, int price, int purchaseLimitQuantity)
             {
                 ItemMasterId = itemMasterId;
                 ItemCategoryId = itemCategoryId;
                 ConsumptionResourceId = consumptionResourceId;
                 Price = price;
+                PurchaseLimitQuantity = purchaseLimitQuantity;
             }
 
             public long ItemMasterId { get; }
             public int ItemCategoryId { get; }
             public int ConsumptionResourceId { get; }
             public int Price { get; }
+            public int PurchaseLimitQuantity { get; }
         }
 
         public class Response

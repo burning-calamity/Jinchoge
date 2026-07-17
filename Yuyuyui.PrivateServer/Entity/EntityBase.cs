@@ -475,11 +475,11 @@ namespace Yuyuyui.PrivateServer
                 new RouteConfig("/my/gifts/received", "GET")
             },
             {
-                typeof(NoopEntity),
+                typeof(GiftAcceptEntity),
                 new RouteConfig("/my/gifts/{gift_id}", "PUT")
             },
             {
-                typeof(NoopEntity),
+                typeof(GiftAcceptEntity),
                 new RouteConfig("/my/gifts/bulk", "POST", "PUT")
             },
             {
@@ -579,11 +579,11 @@ namespace Yuyuyui.PrivateServer
                 new RouteConfig("/my/stamina_items", "GET")
             },
             {
-                typeof(NoopEntity),
+                typeof(StaminaItemTransactionCreateEntity),
                 new RouteConfig("/my/stamina_items/{stamina_item_id}/transactions", "POST")
             },
             {
-                typeof(NoopEntity),
+                typeof(StaminaItemTransactionUpdateEntity),
                 new RouteConfig("/my/stamina_items/{stamina_item_id}/transactions/{transaction_id}", "PUT")
             },
             {
