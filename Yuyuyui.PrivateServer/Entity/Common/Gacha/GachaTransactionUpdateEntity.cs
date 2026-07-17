@@ -30,12 +30,11 @@ namespace Yuyuyui.PrivateServer
             using var cardsDb = new CardsContext();
             using var itemsDb = new ItemsContext();
 
-            GachaLineup? lineup = gachasDb.GachaLineups
-                .FirstOrDefault(l => l.Id == lineupId && l.GachaId == gachaId)
-                ?? gachasDb.GachaLineups.FirstOrDefault(l => l.GachaId == gachaId)
-                ?? gachasDb.GachaLineups.FirstOrDefault(l => l.Id == lineupId)
-                ?? gachasDb.GachaLineups.FirstOrDefault()
-                ?? CreateFallbackLineup(gachaId, lineupId);
+            GachaLineup? lineup = IsSyntheticFallbackLineup(gachaId, lineupId)
+                ? CreateFallbackLineup(gachaId, lineupId)
+                : gachasDb.GachaLineups.FirstOrDefault(l => l.Id == lineupId && l.GachaId == gachaId && l.Sp == 1)
+                  ?? gachasDb.GachaLineups.FirstOrDefault(l => l.GachaId == gachaId && l.Sp == 1)
+                  ?? CreateFallbackLineup(gachaId, lineupId);
 
             IList<GachaContent> rolledContents = RollCards(gachasDb, cardsDb, lineup);
             IList<ResultContent> resultContents = new List<ResultContent>();
@@ -120,6 +119,11 @@ namespace Yuyuyui.PrivateServer
                 Sp = 1,
                 FreeRareGacha = 1
             };
+        }
+
+        private static bool IsSyntheticFallbackLineup(long gachaId, long lineupId)
+        {
+            return lineupId == gachaId * 100 + 1 || lineupId == gachaId * 100 + 10;
         }
 
         private static bool IsTenRollLineup(long lineupId)

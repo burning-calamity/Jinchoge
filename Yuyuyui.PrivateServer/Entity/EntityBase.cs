@@ -138,8 +138,8 @@ namespace Yuyuyui.PrivateServer
             return new NoopEntity(
                 e.HttpClient.Request.RequestUri,
                 e.HttpClient.Request.Method,
-                headersAndBody.Item1,
-                headersAndBody.Item2,
+                new Dictionary<string, string>(),
+                Array.Empty<byte>(),
                 new RouteConfig(apiPath, e.HttpClient.Request.Method));
         }
 

@@ -51,13 +51,12 @@ namespace Yuyuyui.PrivateServer
             catch (Exception exception)
             {
                 Utils.LogError(exception.ToString());
-                var headersAndBody = await ProxyUtils.GetRequestHeadersAndBody(e);
 
                 entity = new NoopEntity(
                     e.HttpClient.Request.RequestUri,
                     e.HttpClient.Request.Method,
-                    headersAndBody.Item1,
-                    headersAndBody.Item2,
+                    new Dictionary<string, string>(),
+                    Array.Empty<byte>(),
                     new RouteConfig(entity.RequestUri.AbsolutePath, e.HttpClient.Request.Method));
                 await entity.Process();
             }
