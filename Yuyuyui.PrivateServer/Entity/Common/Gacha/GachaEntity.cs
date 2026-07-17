@@ -132,9 +132,40 @@ namespace Yuyuyui.PrivateServer
                         button_title = l.ButtonTitle,
                         played_count = null, // TODO
                         has_bonus = false, // TODO
-                        bonus_description = null // TODO
+                        bonus_description = null, // TODO
+                        free_rare_gacha = 1
                     }).ToList();
+            if (lineups.Count == 0)
+                lineups = GetFallbackGachaLineups(gacha);
             return lineups;
+        }
+
+        private List<GachaProductData.Lineup> GetFallbackGachaLineups(Gacha gacha)
+        {
+            return new List<GachaProductData.Lineup>
+            {
+                CreateFallbackLineup(gacha, 1, 250, "1回"),
+                CreateFallbackLineup(gacha, 10, 2500, "10回")
+            };
+        }
+
+        private GachaProductData.Lineup CreateFallbackLineup(Gacha gacha, int lotCount, int amount, string title)
+        {
+            return new GachaProductData.Lineup
+            {
+                id = gacha.Id * 100 + lotCount,
+                lot_count = lotCount,
+                consumption_resource_id = 1,
+                consumption_amount = amount,
+                consumable = true,
+                has_right = true,
+                button_title = title,
+                button_extra = null,
+                played_count = null,
+                has_bonus = false,
+                bonus_description = null,
+                free_rare_gacha = 1
+            };
         }
 
         private List<GachaProductData.PickupContent> GetGachaPickUps(Gacha gacha)

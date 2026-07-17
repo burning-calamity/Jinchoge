@@ -34,7 +34,8 @@ namespace Yuyuyui.PrivateServer
                 .FirstOrDefault(l => l.Id == lineupId && l.GachaId == gachaId)
                 ?? gachasDb.GachaLineups.FirstOrDefault(l => l.GachaId == gachaId)
                 ?? gachasDb.GachaLineups.FirstOrDefault(l => l.Id == lineupId)
-                ?? gachasDb.GachaLineups.FirstOrDefault();
+                ?? gachasDb.GachaLineups.FirstOrDefault()
+                ?? CreateFallbackLineup(gachaId, lineupId);
 
             IList<GachaContent> rolledContents = RollCards(gachasDb, cardsDb, lineup);
             IList<ResultContent> resultContents = new List<ResultContent>();
@@ -104,6 +105,27 @@ namespace Yuyuyui.PrivateServer
                 results.Add(RollOne(cardPool));
 
             return results;
+        }
+
+        private static GachaLineup CreateFallbackLineup(long gachaId, long lineupId)
+        {
+            return new GachaLineup
+            {
+                Id = lineupId,
+                GachaId = gachaId,
+                GachaBoxId = gachaId,
+                LotCount = IsTenRollLineup(lineupId) ? 10 : 1,
+                ConsumptionResourceId = 1,
+                ConsumptionAmount = IsTenRollLineup(lineupId) ? 2500 : 250,
+                Sp = 1,
+                FreeRareGacha = 1
+            };
+        }
+
+        private static bool IsTenRollLineup(long lineupId)
+        {
+            string idText = lineupId.ToString();
+            return idText.EndsWith("10", StringComparison.Ordinal);
         }
 
         private static GachaContent RollOne(IList<GachaContent> pool)
