@@ -170,7 +170,7 @@ namespace Yuyuyui.PrivateServer
             int previousPotentialCount = card.potential;
             card.AddPotential(potentialCount);
 
-            DataModel.Card masterCard = cardsDb.Cards.First(c => c.Id == masterCardId);
+            DataModel.Card masterCard = card.MasterData(cardsDb);
             UpsertPotentialGift(previousPotentialCount, card.potential, masterCard);
 
             card = Card.Load(cards[masterCardId]);

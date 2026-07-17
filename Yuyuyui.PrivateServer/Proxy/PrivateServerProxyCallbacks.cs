@@ -52,12 +52,15 @@ namespace Yuyuyui.PrivateServer
             {
                 Utils.LogError(exception.ToString());
 
-                entity = new NoopEntity(
+                entity = new RequestErrorEntity(
+                    "A1321",
+                    "Internal private server error",
                     e.HttpClient.Request.RequestUri,
                     e.HttpClient.Request.Method,
+                    new RouteConfig(entity.RequestUri.AbsolutePath, e.HttpClient.Request.Method),
                     new Dictionary<string, string>(),
                     Array.Empty<byte>(),
-                    new RouteConfig(entity.RequestUri.AbsolutePath, e.HttpClient.Request.Method));
+                    exception.Message);
                 await entity.Process();
             }
 
