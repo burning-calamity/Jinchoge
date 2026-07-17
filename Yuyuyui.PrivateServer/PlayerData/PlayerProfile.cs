@@ -348,12 +348,20 @@ namespace Yuyuyui.PrivateServer
                 = new Dictionary<long, ShopProductTransaction>(); // transaction_id, shop/product pair
             public IDictionary<long, GachaTransaction> gachaTransactions { get; set; }
                 = new Dictionary<long, GachaTransaction>(); // transaction_id, gacha transaction state
+            public IDictionary<long, BillingPointTransaction> billingPointTransactions { get; set; }
+                = new Dictionary<long, BillingPointTransaction>(); // transaction_id, billing point shop state
         }
 
         public class ShopProductTransaction
         {
             public string shop_id { get; set; } = "";
             public long product_id { get; set; }
+            public bool completed { get; set; }
+        }
+
+        public class BillingPointTransaction
+        {
+            public string kind { get; set; } = "";
             public bool completed { get; set; }
         }
 

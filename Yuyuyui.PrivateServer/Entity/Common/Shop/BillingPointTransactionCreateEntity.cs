@@ -11,9 +11,29 @@ namespace Yuyuyui.PrivateServer
 
         protected override Task ProcessRequest()
         {
-            responseBody = Serialize(new Response { transaction = new Transaction { id = long.Parse(Utils.GenerateRandomDigit(8)) } });
+            var player = GetPlayerFromCookies();
+            long transactionId = long.Parse(Utils.GenerateRandomDigit(8));
+
+            player.transactions.billingPointTransactions[transactionId] = new PlayerProfile.BillingPointTransaction
+            {
+                kind = GetTransactionKind()
+            };
+            player.Save();
+
+            responseBody = Serialize(new Response { transaction = new Transaction { id = transactionId } });
             SetBasicResponseHeaders();
             return Task.CompletedTask;
+        }
+
+        private string GetTransactionKind()
+        {
+            if (RequestUri.AbsolutePath.Contains("weekday_stamina_recovery"))
+                return "weekday_stamina_recovery";
+            if (RequestUri.AbsolutePath.Contains("stamina_recovery"))
+                return "stamina_recovery";
+            if (RequestUri.AbsolutePath.Contains("enhancement_item_capacity"))
+                return "enhancement_item_capacity";
+            return "unknown";
         }
 
         public class Response

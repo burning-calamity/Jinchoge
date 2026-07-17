@@ -14,33 +14,55 @@ namespace Yuyuyui.PrivateServer
             var player = GetPlayerFromCookies();
             long transactionId = long.Parse(GetPathParameter("transaction_id"));
 
-            if (RequestUri.AbsolutePath.Contains("weekday_stamina_recovery"))
+            if (!player.transactions.billingPointTransactions.TryGetValue(transactionId, out var storedTransaction))
+                throw new APIErrorException("A1321", $"Unknown billing point transaction {transactionId}.");
+
+            string requestKind = GetTransactionKind();
+            if (storedTransaction.kind != requestKind)
+                throw new APIErrorException("A1321", $"Billing point transaction {transactionId} does not match {requestKind}.");
+
+            if (!storedTransaction.completed)
             {
-                if (!DeductBillingPoint(player, 50))
-                    throw new APIErrorException("A1321", "Not enough billing points for weekday stamina recovery.");
+                if (requestKind == "weekday_stamina_recovery")
+                {
+                    if (!DeductBillingPoint(player, 50))
+                        throw new APIErrorException("A1321", "Not enough billing points for weekday stamina recovery.");
 
-                player.data.weekdayStamina = Math.Max(player.data.weekdayStamina, 6);
+                    player.data.weekdayStamina = Math.Max(player.data.weekdayStamina, 6);
+                }
+                else if (requestKind == "stamina_recovery")
+                {
+                    if (!DeductBillingPoint(player, 50))
+                        throw new APIErrorException("A1321", "Not enough billing points for stamina recovery.");
+
+                    player.data.stamina = Math.Max(player.data.stamina, 140);
+                }
+                else if (requestKind == "enhancement_item_capacity")
+                {
+                    if (!DeductBillingPoint(player, 30))
+                        throw new APIErrorException("A1321", "Not enough billing points for enhancement item capacity.");
+
+                    player.data.enhancementItemCapacity = Math.Min(player.data.enhancementItemCapacity + 10, 730);
+                }
+
+                storedTransaction.completed = true;
+                player.Save();
             }
-            else if (RequestUri.AbsolutePath.Contains("stamina_recovery"))
-            {
-                if (!DeductBillingPoint(player, 50))
-                    throw new APIErrorException("A1321", "Not enough billing points for stamina recovery.");
-
-                player.data.stamina = Math.Max(player.data.stamina, 140);
-            }
-            else if (RequestUri.AbsolutePath.Contains("enhancement_item_capacity"))
-            {
-                if (!DeductBillingPoint(player, 30))
-                    throw new APIErrorException("A1321", "Not enough billing points for enhancement item capacity.");
-
-                player.data.enhancementItemCapacity = Math.Min(player.data.enhancementItemCapacity + 10, 730);
-            }
-
-            player.Save();
 
             responseBody = Serialize(new Response { transaction = new Transaction { id = transactionId }, completed = true });
             SetBasicResponseHeaders();
             return Task.CompletedTask;
+        }
+
+        private string GetTransactionKind()
+        {
+            if (RequestUri.AbsolutePath.Contains("weekday_stamina_recovery"))
+                return "weekday_stamina_recovery";
+            if (RequestUri.AbsolutePath.Contains("stamina_recovery"))
+                return "stamina_recovery";
+            if (RequestUri.AbsolutePath.Contains("enhancement_item_capacity"))
+                return "enhancement_item_capacity";
+            return "unknown";
         }
 
         private static bool DeductBillingPoint(PlayerProfile player, int amount)

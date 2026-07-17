@@ -43,10 +43,10 @@ namespace Yuyuyui.PrivateServer
             }
 
             GachaLineup? lineup = IsSyntheticFallbackLineup(gachaId, lineupId)
-                ? CreateFallbackLineup(gachaId, lineupId)
+                ? CreateFallbackLineup(gachasDb, gachaId, lineupId)
                 : gachasDb.GachaLineups.FirstOrDefault(l => l.Id == lineupId && l.GachaId == gachaId && l.Sp == 1)
                   ?? gachasDb.GachaLineups.FirstOrDefault(l => l.GachaId == gachaId && l.Sp == 1)
-                  ?? CreateFallbackLineup(gachaId, lineupId);
+                  ?? CreateFallbackLineup(gachasDb, gachaId, lineupId);
 
             IList<GachaContent> rolledContents = RollCards(gachasDb, cardsDb, lineup, player);
             if (rolledContents.Count > 0 && !DeductConsumption(player, gachasDb, lineup))
@@ -334,7 +334,7 @@ namespace Yuyuyui.PrivateServer
             return true;
         }
 
-        private static GachaLineup CreateFallbackLineup(long gachaId, long lineupId)
+        private static GachaLineup CreateFallbackLineup(GachasContext gachasDb, long gachaId, long lineupId)
         {
             return new GachaLineup
             {
@@ -342,16 +342,17 @@ namespace Yuyuyui.PrivateServer
                 GachaId = gachaId,
                 GachaBoxId = gachaId,
                 LotCount = IsTenRollLineup(lineupId) ? 10 : 1,
-                ConsumptionResourceId = GetFallbackConsumptionResourceId(gachaId),
+                ConsumptionResourceId = GetFallbackConsumptionResourceId(gachasDb, gachaId),
                 ConsumptionAmount = IsTenRollLineup(lineupId) ? 2500 : 250,
                 Sp = 1,
                 FreeRareGacha = 1
             };
         }
 
-        private static int GetFallbackConsumptionResourceId(long gachaId)
+        private static int GetFallbackConsumptionResourceId(GachasContext gachasDb, long gachaId)
         {
-            return gachaId == 1 ? 3 : 1;
+            Gacha? gacha = gachasDb.Gachas.FirstOrDefault(g => g.Id == gachaId);
+            return gacha?.Kind == 1 || gachaId == 1 ? 3 : 1;
         }
 
         private static bool IsSyntheticFallbackLineup(long gachaId, long lineupId)
