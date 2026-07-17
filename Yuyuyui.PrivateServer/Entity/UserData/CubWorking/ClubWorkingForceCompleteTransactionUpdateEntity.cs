@@ -26,7 +26,10 @@ namespace Yuyuyui.PrivateServer
 
             ClubWorkingSlot slot = player.clubWorkingSlots
                 .Select(ClubWorkingSlot.Load)
-                .FirstOrDefault(s => s.club_working_id == clubWorkingId)
+                .FirstOrDefault(s => clubWorkingId != 0 && s.club_working_id == clubWorkingId)
+                ?? player.clubWorkingSlots
+                    .Select(ClubWorkingSlot.Load)
+                    .FirstOrDefault(s => !s.available)
                 ?? CreateAdditionalSlot(player);
 
             slot.finishment_time = Utils.CurrentUnixTime() - 1;
@@ -38,7 +41,8 @@ namespace Yuyuyui.PrivateServer
                 {
                     id = transactionId
                 },
-                club_working = slot
+                club_working = slot,
+                club_working_slot = slot
             };
 
             responseBody = Serialize(responseObj);
@@ -75,6 +79,7 @@ namespace Yuyuyui.PrivateServer
         {
             public Transaction transaction { get; set; } = new();
             public ClubWorkingSlot club_working { get; set; } = new();
+            public ClubWorkingSlot club_working_slot { get; set; } = new();
 
             public class Transaction
             {

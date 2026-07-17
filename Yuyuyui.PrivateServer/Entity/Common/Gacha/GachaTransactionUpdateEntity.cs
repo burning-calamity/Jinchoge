@@ -30,10 +30,14 @@ namespace Yuyuyui.PrivateServer
             using var cardsDb = new CardsContext();
             using var itemsDb = new ItemsContext();
 
-            if (!player.transactions.gachaTransactions.TryGetValue(transactionId, out var storedTransaction) ||
-                storedTransaction.gacha_id != gachaId ||
-                storedTransaction.lineup_id != lineupId)
+            if (!player.transactions.gachaTransactions.TryGetValue(transactionId, out var storedTransaction))
                 throw new APIErrorException("A1321", $"Unknown gacha transaction {transactionId}.");
+
+            if (gachaId == 0)
+                gachaId = storedTransaction.gacha_id;
+
+            if (storedTransaction.gacha_id != gachaId || storedTransaction.lineup_id != lineupId)
+                throw new APIErrorException("A1321", $"Gacha transaction {transactionId} does not match gacha {gachaId}/lineup {lineupId}.");
 
             if (storedTransaction.completed)
             {

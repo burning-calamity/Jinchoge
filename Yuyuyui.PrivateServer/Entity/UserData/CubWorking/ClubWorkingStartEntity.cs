@@ -41,7 +41,8 @@ namespace Yuyuyui.PrivateServer
 
             Response responseObj = new()
             {
-                club_working = slot
+                club_working = slot,
+                club_working_slot = slot
             };
 
             responseBody = Serialize(responseObj);
@@ -96,6 +97,7 @@ namespace Yuyuyui.PrivateServer
         public class Response
         {
             public ClubWorkingSlot club_working { get; set; } = new();
+            public ClubWorkingSlot club_working_slot { get; set; } = new();
         }
     }
 }

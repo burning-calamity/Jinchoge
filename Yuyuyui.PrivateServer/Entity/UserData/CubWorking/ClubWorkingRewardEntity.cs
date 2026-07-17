@@ -25,7 +25,10 @@ namespace Yuyuyui.PrivateServer
 
             ClubWorkingSlot slot = player.clubWorkingSlots
                 .Select(ClubWorkingSlot.Load)
-                .FirstOrDefault(s => s.club_working_id == clubWorkingId)
+                .FirstOrDefault(s => clubWorkingId != 0 && s.club_working_id == clubWorkingId)
+                ?? player.clubWorkingSlots
+                    .Select(ClubWorkingSlot.Load)
+                    .FirstOrDefault(s => !s.available)
                 ?? CreateAdditionalSlot(player);
 
             ClubWorkingSlot completedSlot = new()
