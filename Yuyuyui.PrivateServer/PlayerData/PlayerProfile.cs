@@ -113,11 +113,17 @@ namespace Yuyuyui.PrivateServer
             if (previousPotential >= border || currentPotential < border)
                 return;
 
-            DataModel.Gift masterGift;
+            DataModel.Gift? masterGift;
             using (var giftsDb = new GiftsContext())
                 masterGift = giftsDb.Gifts
                     .Where(gift => gift.ContentType == "Accessory")
-                    .First(gift => gift.Id == potentialGiftId);
+                    .FirstOrDefault(gift => gift.Id == potentialGiftId);
+
+            if (masterGift == null)
+            {
+                Utils.LogWarning($"Potential gift {potentialGiftId} was not found; skipping accessory grant.");
+                return;
+            }
 
             GrantAccessory(masterGift.ContentId, masterGift.Quantity);
         }
