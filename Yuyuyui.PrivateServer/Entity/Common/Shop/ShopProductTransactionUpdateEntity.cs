@@ -22,11 +22,19 @@ namespace Yuyuyui.PrivateServer
             string shopId = GetPathParameter("shop_id");
             long productId = long.Parse(GetPathParameter("product_id"));
             long transactionId = long.Parse(GetPathParameter("transaction_id"));
-            ShopProduct product = FindProduct(shopId, productId);
             PlayerProfile player = GetPlayerFromCookies();
+
+            if (productId == 0 && player.transactions.shopProductTransactions.TryGetValue(transactionId, out var storedTransaction))
+            {
+                shopId = storedTransaction.shop_id;
+                productId = storedTransaction.product_id;
+            }
+
+            ShopProduct product = FindProduct(shopId, productId);
 
             DeductCurrency(player, product);
             GrantProduct(player, product);
+            player.transactions.shopProductTransactions.Remove(transactionId);
             player.Save();
 
             Response responseObj = new()

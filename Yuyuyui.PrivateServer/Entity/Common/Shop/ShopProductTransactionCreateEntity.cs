@@ -18,11 +18,23 @@ namespace Yuyuyui.PrivateServer
 
         protected override Task ProcessRequest()
         {
+            var player = GetPlayerFromCookies();
+            string shopId = GetPathParameter("shop_id");
+            long productId = long.Parse(GetPathParameter("product_id"));
+            long transactionId = long.Parse(Utils.GenerateRandomDigit(8));
+
+            player.transactions.shopProductTransactions[transactionId] = new PlayerProfile.ShopProductTransaction
+            {
+                shop_id = shopId,
+                product_id = productId
+            };
+            player.Save();
+
             Response responseObj = new()
             {
                 transaction = new()
                 {
-                    id = long.Parse(Utils.GenerateRandomDigit(8))
+                    id = transactionId
                 }
             };
 

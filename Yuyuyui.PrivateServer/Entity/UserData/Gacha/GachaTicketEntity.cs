@@ -22,22 +22,26 @@ namespace Yuyuyui.PrivateServer
         {
             Response responseObj = new();
 
+            using var gachasDb = new GachasContext();
+
             if (Config.Get().InGame.InfiniteItems)
             {
-                using var gachasDb = new GachasContext();
                 responseObj.gacha_tickets = gachasDb.GachaTickets
                     .ToList()
-                    .Select(t => new Ticket
+                    .Select(t => ToTicket(t, 999))
+                    .ToList();
+            }
+            else
+            {
+                var player = GetPlayerFromCookies();
+                responseObj.gacha_tickets = player.items.gachaTickets
+                    .Select(p => new
                     {
-                        id = t.Id,
-                        master_id = t.Id,
-                        gacha_id = t.GachaId,
-                        gacha_kind = t.GachaKind,
-                        consumption_resource_id = t.ConsumptionResourceId,
-                        image_id = t.ImageId,
-                        name = t.Name,
-                        quantity = 999
+                        Master = gachasDb.GachaTickets.FirstOrDefault(t => t.Id == p.Key),
+                        UserItem = Item.Exists(p.Value) ? Item.Load(p.Value) : null
                     })
+                    .Where(t => t.Master != null && t.UserItem != null && t.UserItem.quantity > 0)
+                    .Select(t => ToTicket(t.Master!, t.UserItem!.quantity))
                     .ToList();
             }
 
@@ -47,6 +51,21 @@ namespace Yuyuyui.PrivateServer
             SetBasicResponseHeaders();
 
             return Task.CompletedTask;
+        }
+
+        private static Ticket ToTicket(DataModel.GachaTicket ticket, int quantity)
+        {
+            return new Ticket
+            {
+                id = ticket.Id,
+                master_id = ticket.Id,
+                gacha_id = ticket.GachaId,
+                gacha_kind = ticket.GachaKind,
+                consumption_resource_id = ticket.ConsumptionResourceId,
+                image_id = ticket.ImageId,
+                name = ticket.Name,
+                quantity = quantity
+            };
         }
 
         public class Response

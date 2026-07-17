@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Text;
 using System.Threading.Tasks;
 using Titanium.Web.Proxy.EventArguments;
 using Titanium.Web.Proxy.Http;
@@ -15,13 +14,6 @@ namespace Yuyuyui.PrivateServer
         public async Task OnRequest(object sender, SessionEventArgs e)
         {
             if (ProxyUtils.WebService(e)) return;
-
-            if (e.HttpClient.Request.RequestUri.Host.Contains("perf-events.cloud.unity3d.com"))
-            {
-                byte[] body = await e.GetRequestBody();
-                string bodyStr = Encoding.UTF8.GetString(body);
-                Utils.LogWarning(bodyStr);
-            }
 
             if (!e.HttpClient.Request.RequestUri.Host.Contains(PrivateServer.OFFICIAL_API_SERVER) &&
                 !e.HttpClient.Request.RequestUri.Host.Contains(PrivateServer.PRIVATE_LOCAL_API_SERVER))
@@ -111,8 +103,7 @@ namespace Yuyuyui.PrivateServer
             }
 
             e.DecryptSsl = e.HttpClient.Request.RequestUri.Host.Contains(PrivateServer.OFFICIAL_API_SERVER)
-                || e.HttpClient.Request.RequestUri.Host.Contains(PrivateServer.PRIVATE_LOCAL_API_SERVER)
-                || e.HttpClient.Request.RequestUri.Host.Contains("perf-events.cloud.unity3d.com");
+                || e.HttpClient.Request.RequestUri.Host.Contains(PrivateServer.PRIVATE_LOCAL_API_SERVER);
 
             return Task.CompletedTask;
         }
