@@ -235,7 +235,7 @@ namespace Yuyuyui.PrivateServer
             pathParameters = ExtractPathParameters(config.apiPath, StripApiPrefix(requestUri.AbsolutePath))!;
         }
 
-        public static readonly Dictionary<Type, RouteConfig> configs = new()
+        public static readonly RouteConfigCollection configs = new()
         {
             {
                 typeof(TutorialProgressEntity),
@@ -768,5 +768,13 @@ namespace Yuyuyui.PrivateServer
 
         public readonly string apiPath;
         public readonly string[] httpMethods;
+    }
+
+    public class RouteConfigCollection : List<KeyValuePair<Type, RouteConfig>>
+    {
+        public void Add(Type entityType, RouteConfig routeConfig)
+        {
+            Add(new KeyValuePair<Type, RouteConfig>(entityType, routeConfig));
+        }
     }
 }
