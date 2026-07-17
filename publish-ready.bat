@@ -7,7 +7,7 @@ echo ========================================
 echo Jinchoge publish helper
 echo ========================================
 echo.
-
+color 02
 where dotnet >nul 2>nul
 if errorlevel 1 (
     echo ERROR: .NET SDK was not found on PATH.
