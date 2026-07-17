@@ -37,8 +37,8 @@ namespace Yuyuyui.PrivateServer
                   ?? CreateFallbackLineup(gachaId, lineupId);
 
             IList<GachaContent> rolledContents = RollCards(gachasDb, cardsDb, lineup, player);
-            if (rolledContents.Count > 0)
-                DeductConsumption(player, gachasDb, lineup);
+            if (rolledContents.Count > 0 && !DeductConsumption(player, gachasDb, lineup))
+                throw new APIErrorException("A1321", "Not enough gacha currency or ticket balance for this lineup.");
 
             IList<ResultContent> resultContents = new List<ResultContent>();
 
@@ -185,52 +185,85 @@ namespace Yuyuyui.PrivateServer
             return null;
         }
 
-        private static void DeductConsumption(PlayerProfile player, GachasContext gachasDb, GachaLineup? lineup)
+        private static bool DeductConsumption(PlayerProfile player, GachasContext gachasDb, GachaLineup? lineup)
         {
             if (lineup == null || lineup.ConsumptionAmount <= 0 || Config.Get().InGame.InfiniteItems)
-                return;
+                return true;
 
             int amount = lineup.ConsumptionAmount;
-            switch (lineup.ConsumptionResourceId)
+            bool deducted = lineup.ConsumptionResourceId switch
             {
-                case 1:
-                    DeductBillingPoint(player, amount);
-                    break;
-                case 2:
-                    player.data.freeBlessing = Math.Max(0, player.data.freeBlessing - amount);
-                    break;
-                case 3:
-                    player.data.friendPoint = Math.Max(0, player.data.friendPoint - amount);
-                    break;
-                case 6:
-                case 7:
-                    DeductGachaTicket(player, gachasDb, lineup, amount);
-                    break;
-                case 8:
-                    player.data.braveCoin = Math.Max(0, player.data.braveCoin - amount);
-                    break;
-                case 21:
-                    player.data.exchangePoint = Math.Max(0, player.data.exchangePoint - amount);
-                    break;
-                default:
-                    Utils.LogWarning($"Gacha lineup {lineup.Id} uses unsupported consumption resource {lineup.ConsumptionResourceId}; no balance was deducted.");
-                    break;
+                1 => DeductBillingPoint(player, amount),
+                2 => DeductFreeBlessing(player, amount),
+                3 => DeductFriendPoint(player, amount),
+                6 or 7 => DeductGachaTicket(player, gachasDb, lineup, amount),
+                8 => DeductBraveCoin(player, amount),
+                21 => DeductExchangePoint(player, amount),
+                _ => false
+            };
+
+            if (!deducted)
+            {
+                Utils.LogWarning($"Gacha lineup {lineup.Id} could not deduct resource {lineup.ConsumptionResourceId} amount {amount}.");
+                return false;
             }
 
             player.Save();
+            return true;
         }
 
-        private static void DeductBillingPoint(PlayerProfile player, int amount)
+        private static bool DeductBillingPoint(PlayerProfile player, int amount)
         {
+            if (player.data.paidBlessing + player.data.freeBlessing < amount)
+                return false;
+
             int paidDeduction = Math.Min(player.data.paidBlessing, amount);
             player.data.paidBlessing -= paidDeduction;
 
             int remaining = amount - paidDeduction;
             if (remaining > 0)
-                player.data.freeBlessing = Math.Max(0, player.data.freeBlessing - remaining);
+                player.data.freeBlessing -= remaining;
+
+            return true;
         }
 
-        private static void DeductGachaTicket(
+        private static bool DeductFreeBlessing(PlayerProfile player, int amount)
+        {
+            if (player.data.freeBlessing < amount)
+                return false;
+
+            player.data.freeBlessing -= amount;
+            return true;
+        }
+
+        private static bool DeductFriendPoint(PlayerProfile player, int amount)
+        {
+            if (player.data.friendPoint < amount)
+                return false;
+
+            player.data.friendPoint -= amount;
+            return true;
+        }
+
+        private static bool DeductBraveCoin(PlayerProfile player, int amount)
+        {
+            if (player.data.braveCoin < amount)
+                return false;
+
+            player.data.braveCoin -= amount;
+            return true;
+        }
+
+        private static bool DeductExchangePoint(PlayerProfile player, int amount)
+        {
+            if (player.data.exchangePoint < amount)
+                return false;
+
+            player.data.exchangePoint -= amount;
+            return true;
+        }
+
+        private static bool DeductGachaTicket(
             PlayerProfile player,
             GachasContext gachasDb,
             GachaLineup lineup,
@@ -243,12 +276,16 @@ namespace Yuyuyui.PrivateServer
             if (ticket == null || !player.items.gachaTickets.TryGetValue(ticket.Id, out long ticketItemId) || !Item.Exists(ticketItemId))
             {
                 Utils.LogWarning($"No persisted gacha ticket was found for lineup {lineup.Id}; ticket balance was not deducted.");
-                return;
+                return false;
             }
 
             Item ticketItem = Item.Load(ticketItemId);
-            ticketItem.quantity = Math.Max(0, ticketItem.quantity - amount);
+            if (ticketItem.quantity < amount)
+                return false;
+
+            ticketItem.quantity -= amount;
             ticketItem.Save();
+            return true;
         }
 
         private static GachaLineup CreateFallbackLineup(long gachaId, long lineupId)

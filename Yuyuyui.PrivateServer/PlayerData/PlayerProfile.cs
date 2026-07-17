@@ -106,10 +106,12 @@ namespace Yuyuyui.PrivateServer
         public void UpsertPotentialGift(int previousPotential, int currentPotential, DataModel.Card masterCard)
         {
             var border = masterCard.PotentialGiftBorder;
+            long? potentialGiftId = masterCard.PotentialGiftId;
+            if (border == null || potentialGiftId == null)
+                return;
+
             if (previousPotential >= border || currentPotential < border)
                 return;
-        
-            long? potentialGiftId = masterCard.PotentialGiftId;
 
             DataModel.Gift masterGift;
             using (var giftsDb = new GiftsContext())
