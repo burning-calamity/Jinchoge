@@ -170,7 +170,7 @@ namespace Yuyuyui.PrivateServer
             int previousPotentialCount = card.potential;
             card.AddPotential(potentialCount);
 
-            DataModel.Card masterCard = cardsDb.Cards.First(c => c.Id == masterCardId);
+            DataModel.Card masterCard = card.MasterData(cardsDb);
             UpsertPotentialGift(previousPotentialCount, card.potential, masterCard);
 
             card = Card.Load(cards[masterCardId]);
@@ -276,6 +276,7 @@ namespace Yuyuyui.PrivateServer
             public long? titleItemID { get; set; } = null;
             public int stamina { get; set; } = 140; // wip
             public int weekdayStamina { get; set; } = 6;
+            public bool birthdateRegistered { get; set; } = false;
 
             public long lastActive { get; set; } = 0; // unixtime
         }
@@ -295,12 +296,21 @@ namespace Yuyuyui.PrivateServer
             public IDictionary<long, long> eventItems { get; set; } = new Dictionary<long, long>(); // master_id, id
             public IDictionary<long, long> evolution { get; set; } = new Dictionary<long, long>(); // master_id, id
             public IDictionary<long, long> stamina { get; set; } = new Dictionary<long, long>(); // master_id, id
+            public IDictionary<long, long> gachaTickets { get; set; } = new Dictionary<long, long>(); // master_id, id
             public IList<long> titleItems { get; set; } = new List<long>(); // master_id
         }
 
         public class Transactions
         {
             public IDictionary<long, long> questTransactions { get; set; } = new Dictionary<long, long>(); // stage_id, id
+            public IDictionary<long, ShopProductTransaction> shopProductTransactions { get; set; }
+                = new Dictionary<long, ShopProductTransaction>(); // transaction_id, shop/product pair
+        }
+
+        public class ShopProductTransaction
+        {
+            public string shop_id { get; set; } = "";
+            public long product_id { get; set; }
         }
     }
 }
