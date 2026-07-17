@@ -133,7 +133,7 @@ namespace Yuyuyui.PrivateServer
                         played_count = null, // TODO
                         has_bonus = false, // TODO
                         bonus_description = null, // TODO
-                        free_rare_gacha = 1
+                        free_rare_gacha = l.FreeRareGacha
                     }).ToList();
             if (lineups.Count == 0)
                 lineups = GetFallbackGachaLineups(gacha);
