@@ -476,11 +476,11 @@ namespace Yuyuyui.PrivateServer
             },
             {
                 typeof(GiftAcceptEntity),
-                new RouteConfig("/my/gifts/{gift_id}", "PUT")
+                new RouteConfig("/my/gifts/bulk", "POST", "PUT")
             },
             {
                 typeof(GiftAcceptEntity),
-                new RouteConfig("/my/gifts/bulk", "POST", "PUT")
+                new RouteConfig("/my/gifts/{gift_id}", "PUT")
             },
             {
             	typeof(FriendEntity),

@@ -46,8 +46,9 @@ namespace Yuyuyui.PrivateServer
                 if (purchasedQuantity >= product.PurchaseLimitQuantity)
                     throw new APIErrorException("A1321", $"Purchase limit reached for shop product {shopId}/{productId}.");
 
-                if (!DeductCurrency(player, product))
-                    throw new APIErrorException("A1321", $"Not enough currency to purchase shop product {shopId}/{productId}.");
+                int currentPrice = GetCurrentPrice(product, purchasedQuantity);
+                if (!DeductCurrency(player, product, currentPrice))
+                    throw new APIErrorException("A1321", $"Not enough currency to purchase shop product {shopId}/{productId} for {currentPrice}.");
 
                 GrantProduct(player, product);
                 player.transactions.shopProductPurchaseCounts[purchaseKey] = purchasedQuantity + 1;
@@ -80,15 +81,15 @@ namespace Yuyuyui.PrivateServer
         {
             return (shopId, productId) switch
             {
-                ("C3365", 10093) => new ShopProduct(100040, (int)ItemCategory.Card, 4, 50000, 5),
-                ("C3365", 10094) => new ShopProduct(100140, (int)ItemCategory.Card, 4, 50000, 5),
-                ("C3365", 10095) => new ShopProduct(100140, (int)ItemCategory.Card, 8, 5, 5),
-                ("A3365", 10093) => new ShopProduct(500101, (int)ItemCategory.Accessory, 4, 6000, 20),
-                ("A3365", 10094) => new ShopProduct(500109, (int)ItemCategory.Accessory, 4, 6000, 20),
-                ("A3365", 10095) => new ShopProduct(500091, (int)ItemCategory.Accessory, 4, 8000, 20),
-                ("I3365", 10093) => new ShopProduct(2, (int)ItemCategory.EnhancementItem, 4, 1000, 20),
-                ("I3365", 10094) => new ShopProduct(10310, (int)ItemCategory.EvolutionItem, 4, 1000, 10),
-                ("I3365", 10095) => new ShopProduct(10410, (int)ItemCategory.EvolutionItem, 4, 1000, 10),
+                ("C3365", 10093) => new ShopProduct(100040, (int)ItemCategory.Card, 4, 50000, 150000, 5),
+                ("C3365", 10094) => new ShopProduct(100140, (int)ItemCategory.Card, 4, 50000, 150000, 5),
+                ("C3365", 10095) => new ShopProduct(100140, (int)ItemCategory.Card, 8, 5, 9, 5),
+                ("A3365", 10093) => new ShopProduct(500101, (int)ItemCategory.Accessory, 4, 6000, 63000, 20),
+                ("A3365", 10094) => new ShopProduct(500109, (int)ItemCategory.Accessory, 4, 6000, 63000, 20),
+                ("A3365", 10095) => new ShopProduct(500091, (int)ItemCategory.Accessory, 4, 8000, 84000, 20),
+                ("I3365", 10093) => new ShopProduct(2, (int)ItemCategory.EnhancementItem, 4, 1000, 5750, 20),
+                ("I3365", 10094) => new ShopProduct(10310, (int)ItemCategory.EvolutionItem, 4, 1000, 5500, 10),
+                ("I3365", 10095) => new ShopProduct(10410, (int)ItemCategory.EvolutionItem, 4, 1000, 5500, 10),
                 _ => throw new APIErrorException("A1321", $"Unknown shop product {shopId}/{productId}")
             };
         }
@@ -154,7 +155,17 @@ namespace Yuyuyui.PrivateServer
             existingItem.Save();
         }
 
-        private static bool DeductCurrency(PlayerProfile player, ShopProduct product)
+        private static int GetCurrentPrice(ShopProduct product, int purchasedQuantity)
+        {
+            if (product.PurchaseLimitQuantity <= 1)
+                return product.MaxPrice;
+
+            int clampedPurchasedQuantity = Math.Min(Math.Max(purchasedQuantity, 0), product.PurchaseLimitQuantity - 1);
+            decimal step = (product.MaxPrice - product.MinPrice) / (decimal) (product.PurchaseLimitQuantity - 1);
+            return (int) decimal.Round(product.MinPrice + (step * clampedPurchasedQuantity), MidpointRounding.AwayFromZero);
+        }
+
+        private static bool DeductCurrency(PlayerProfile player, ShopProduct product, int price)
         {
             if (Config.Get().InGame.InfiniteItems)
                 return true;
@@ -162,16 +173,16 @@ namespace Yuyuyui.PrivateServer
             switch (product.ConsumptionResourceId)
             {
                 case 4:
-                    if (player.data.money < product.Price)
+                    if (player.data.money < price)
                         return false;
 
-                    player.data.money -= product.Price;
+                    player.data.money -= price;
                     return true;
                 case 8:
-                    if (player.data.braveCoin < product.Price)
+                    if (player.data.braveCoin < price)
                         return false;
 
-                    player.data.braveCoin -= product.Price;
+                    player.data.braveCoin -= price;
                     return true;
                 default:
                     Utils.LogWarning($"Shop product uses unsupported consumption resource {product.ConsumptionResourceId}; no currency was deducted.");
@@ -181,19 +192,27 @@ namespace Yuyuyui.PrivateServer
 
         private sealed class ShopProduct
         {
-            public ShopProduct(long itemMasterId, int itemCategoryId, int consumptionResourceId, int price, int purchaseLimitQuantity)
+            public ShopProduct(
+                long itemMasterId,
+                int itemCategoryId,
+                int consumptionResourceId,
+                int minPrice,
+                int maxPrice,
+                int purchaseLimitQuantity)
             {
                 ItemMasterId = itemMasterId;
                 ItemCategoryId = itemCategoryId;
                 ConsumptionResourceId = consumptionResourceId;
-                Price = price;
+                MinPrice = minPrice;
+                MaxPrice = maxPrice;
                 PurchaseLimitQuantity = purchaseLimitQuantity;
             }
 
             public long ItemMasterId { get; }
             public int ItemCategoryId { get; }
             public int ConsumptionResourceId { get; }
-            public int Price { get; }
+            public int MinPrice { get; }
+            public int MaxPrice { get; }
             public int PurchaseLimitQuantity { get; }
         }
 
