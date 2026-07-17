@@ -106,10 +106,12 @@ namespace Yuyuyui.PrivateServer
         public void UpsertPotentialGift(int previousPotential, int currentPotential, DataModel.Card masterCard)
         {
             var border = masterCard.PotentialGiftBorder;
+            long? potentialGiftId = masterCard.PotentialGiftId;
+            if (border == null || potentialGiftId == null)
+                return;
+
             if (previousPotential >= border || currentPotential < border)
                 return;
-        
-            long? potentialGiftId = masterCard.PotentialGiftId;
 
             DataModel.Gift masterGift;
             using (var giftsDb = new GiftsContext())
@@ -148,15 +150,47 @@ namespace Yuyuyui.PrivateServer
             Utils.Log(string.Format(Resources.LOG_PS_ACCESSORY_QUANTITY_INCREASED, accessoryId, quantity));
         }
 
+        public long GetCardProfileKey(long masterCardId, CardsContext cardsDb)
+        {
+            Card lookupCard = Card.NewCardByMasterId(masterCardId);
+            return lookupCard.MasterData(cardsDb).BaseCardId;
+        }
+
+        public long NormalizeCardProfileKey(long masterCardId, CardsContext cardsDb)
+        {
+            long cardProfileKey = GetCardProfileKey(masterCardId, cardsDb);
+            if (cardProfileKey != masterCardId && !cards.ContainsKey(cardProfileKey) && cards.TryGetValue(masterCardId, out long oldUserCardId))
+            {
+                cards[cardProfileKey] = oldUserCardId;
+                cards.Remove(masterCardId);
+                Save();
+            }
+
+            return cardProfileKey;
+        }
+
+        public bool HasCardForMasterId(long masterCardId, CardsContext cardsDb)
+        {
+            long cardProfileKey = GetCardProfileKey(masterCardId, cardsDb);
+            return cards.ContainsKey(cardProfileKey) || cards.ContainsKey(masterCardId);
+        }
+
+        public long GetUserCardIdForMasterId(long masterCardId, CardsContext cardsDb)
+        {
+            long cardProfileKey = NormalizeCardProfileKey(masterCardId, cardsDb);
+            return cards[cardProfileKey];
+        }
+
         public void GrantCard(long masterCardId, int potentialCount, CardsContext cardsDb, ItemsContext itemsDb)
         {
-            bool isNewCard = !cards.Keys.Contains(masterCardId);
+            long cardProfileKey = NormalizeCardProfileKey(masterCardId, cardsDb);
+            bool isNewCard = !cards.Keys.Contains(cardProfileKey);
 
             Card card;
             if (isNewCard)
             {
                 card = Card.NewCardByMasterId(masterCardId);
-                cards.Add(masterCardId, card.id);
+                cards.Add(cardProfileKey, card.id);
                 card.Save();
                 Save();
                 potentialCount -= 1;
@@ -164,16 +198,16 @@ namespace Yuyuyui.PrivateServer
             }
             else
             {
-                card = Card.Load(cards[masterCardId]);
+                card = Card.Load(cards[cardProfileKey]);
             }
 
             int previousPotentialCount = card.potential;
             card.AddPotential(potentialCount);
 
-            DataModel.Card masterCard = cardsDb.Cards.First(c => c.Id == masterCardId);
+            DataModel.Card masterCard = card.MasterData(cardsDb);
             UpsertPotentialGift(previousPotentialCount, card.potential, masterCard);
 
-            card = Card.Load(cards[masterCardId]);
+            card = Card.Load(cards[cardProfileKey]);
             UpdateEvolutionAccessoriesForCard(card, potentialCount, cardsDb);
 
             EnsureEligibleCardTitle(cardsDb, itemsDb);
@@ -276,6 +310,8 @@ namespace Yuyuyui.PrivateServer
             public long? titleItemID { get; set; } = null;
             public int stamina { get; set; } = 140; // wip
             public int weekdayStamina { get; set; } = 6;
+            public int enhancementItemCapacity { get; set; } = 590;
+            public bool birthdateRegistered { get; set; } = false;
 
             public long lastActive { get; set; } = 0; // unixtime
         }
@@ -295,12 +331,21 @@ namespace Yuyuyui.PrivateServer
             public IDictionary<long, long> eventItems { get; set; } = new Dictionary<long, long>(); // master_id, id
             public IDictionary<long, long> evolution { get; set; } = new Dictionary<long, long>(); // master_id, id
             public IDictionary<long, long> stamina { get; set; } = new Dictionary<long, long>(); // master_id, id
+            public IDictionary<long, long> gachaTickets { get; set; } = new Dictionary<long, long>(); // master_id, id
             public IList<long> titleItems { get; set; } = new List<long>(); // master_id
         }
 
         public class Transactions
         {
             public IDictionary<long, long> questTransactions { get; set; } = new Dictionary<long, long>(); // stage_id, id
+            public IDictionary<long, ShopProductTransaction> shopProductTransactions { get; set; }
+                = new Dictionary<long, ShopProductTransaction>(); // transaction_id, shop/product pair
+        }
+
+        public class ShopProductTransaction
+        {
+            public string shop_id { get; set; } = "";
+            public long product_id { get; set; }
         }
     }
 }
