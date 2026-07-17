@@ -170,7 +170,7 @@ namespace Yuyuyui.PrivateServer
             int previousPotentialCount = card.potential;
             card.AddPotential(potentialCount);
 
-            DataModel.Card masterCard = cardsDb.Cards.First(c => c.Id == masterCardId);
+            DataModel.Card masterCard = card.MasterData(cardsDb);
             UpsertPotentialGift(previousPotentialCount, card.potential, masterCard);
 
             card = Card.Load(cards[masterCardId]);
@@ -276,6 +276,7 @@ namespace Yuyuyui.PrivateServer
             public long? titleItemID { get; set; } = null;
             public int stamina { get; set; } = 140; // wip
             public int weekdayStamina { get; set; } = 6;
+            public bool birthdateRegistered { get; set; } = false;
 
             public long lastActive { get; set; } = 0; // unixtime
         }

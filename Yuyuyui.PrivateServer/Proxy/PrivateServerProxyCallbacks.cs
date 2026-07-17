@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -45,6 +46,21 @@ namespace Yuyuyui.PrivateServer
                     headersAndBody.Item1,
                     headersAndBody.Item2,
                     $"{apiError.body}");
+                await entity.Process();
+            }
+            catch (Exception exception)
+            {
+                Utils.LogError(exception.ToString());
+
+                entity = new RequestErrorEntity(
+                    "A1321",
+                    "Internal private server error",
+                    e.HttpClient.Request.RequestUri,
+                    e.HttpClient.Request.Method,
+                    new RouteConfig(entity.RequestUri.AbsolutePath, e.HttpClient.Request.Method),
+                    new Dictionary<string, string>(),
+                    Array.Empty<byte>(),
+                    exception.Message);
                 await entity.Process();
             }
 
