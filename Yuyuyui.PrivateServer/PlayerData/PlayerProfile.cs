@@ -148,15 +148,22 @@ namespace Yuyuyui.PrivateServer
             Utils.Log(string.Format(Resources.LOG_PS_ACCESSORY_QUANTITY_INCREASED, accessoryId, quantity));
         }
 
+        public long GetCardProfileKey(long masterCardId, CardsContext cardsDb)
+        {
+            Card lookupCard = Card.NewCardByMasterId(masterCardId);
+            return lookupCard.MasterData(cardsDb).BaseCardId;
+        }
+
         public void GrantCard(long masterCardId, int potentialCount, CardsContext cardsDb, ItemsContext itemsDb)
         {
-            bool isNewCard = !cards.Keys.Contains(masterCardId);
+            long cardProfileKey = GetCardProfileKey(masterCardId, cardsDb);
+            bool isNewCard = !cards.Keys.Contains(cardProfileKey);
 
             Card card;
             if (isNewCard)
             {
                 card = Card.NewCardByMasterId(masterCardId);
-                cards.Add(masterCardId, card.id);
+                cards.Add(cardProfileKey, card.id);
                 card.Save();
                 Save();
                 potentialCount -= 1;
@@ -164,7 +171,7 @@ namespace Yuyuyui.PrivateServer
             }
             else
             {
-                card = Card.Load(cards[masterCardId]);
+                card = Card.Load(cards[cardProfileKey]);
             }
 
             int previousPotentialCount = card.potential;
@@ -173,7 +180,7 @@ namespace Yuyuyui.PrivateServer
             DataModel.Card masterCard = card.MasterData(cardsDb);
             UpsertPotentialGift(previousPotentialCount, card.potential, masterCard);
 
-            card = Card.Load(cards[masterCardId]);
+            card = Card.Load(cards[cardProfileKey]);
             UpdateEvolutionAccessoriesForCard(card, potentialCount, cardsDb);
 
             EnsureEligibleCardTitle(cardsDb, itemsDb);
@@ -276,6 +283,7 @@ namespace Yuyuyui.PrivateServer
             public long? titleItemID { get; set; } = null;
             public int stamina { get; set; } = 140; // wip
             public int weekdayStamina { get; set; } = 6;
+            public int enhancementItemCapacity { get; set; } = 590;
             public bool birthdateRegistered { get; set; } = false;
 
             public long lastActive { get; set; } = 0; // unixtime
