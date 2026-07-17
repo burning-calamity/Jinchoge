@@ -291,16 +291,28 @@ namespace Yuyuyui.PrivateServer
                 new RouteConfig("/inherited_executions", "POST")
             },
             {
-                typeof(NoopEntity),
+                typeof(CooperationEntity),
                 new RouteConfig("/portalsite/cooperations", "GET", "POST")
             },
             {
-                typeof(NoopEntity),
+                typeof(CooperationEntity),
                 new RouteConfig("/portalsite/cooperations/confirm", "GET", "POST")
             },
             {
-                typeof(NoopEntity),
+                typeof(CooperationEntity),
                 new RouteConfig("/portalsite/cooperations/execute", "POST")
+            },
+            {
+                typeof(AchievementsEntity),
+                new RouteConfig("/achievements", "GET", "POST", "PUT")
+            },
+            {
+                typeof(AchievementsEntity),
+                new RouteConfig("/my/achievements", "GET", "POST", "PUT")
+            },
+            {
+                typeof(AchievementsEntity),
+                new RouteConfig("/my/achievements/{achievement_id}", "GET", "POST", "PUT")
             },
             {
                 typeof(NoopEntity),
