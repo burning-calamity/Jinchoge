@@ -156,9 +156,34 @@ namespace Yuyuyui.PrivateServer
             return lookupCard.MasterData(cardsDb).BaseCardId;
         }
 
-        public void GrantCard(long masterCardId, int potentialCount, CardsContext cardsDb, ItemsContext itemsDb)
+        public long NormalizeCardProfileKey(long masterCardId, CardsContext cardsDb)
         {
             long cardProfileKey = GetCardProfileKey(masterCardId, cardsDb);
+            if (cardProfileKey != masterCardId && !cards.ContainsKey(cardProfileKey) && cards.TryGetValue(masterCardId, out long oldUserCardId))
+            {
+                cards[cardProfileKey] = oldUserCardId;
+                cards.Remove(masterCardId);
+                Save();
+            }
+
+            return cardProfileKey;
+        }
+
+        public bool HasCardForMasterId(long masterCardId, CardsContext cardsDb)
+        {
+            long cardProfileKey = GetCardProfileKey(masterCardId, cardsDb);
+            return cards.ContainsKey(cardProfileKey) || cards.ContainsKey(masterCardId);
+        }
+
+        public long GetUserCardIdForMasterId(long masterCardId, CardsContext cardsDb)
+        {
+            long cardProfileKey = NormalizeCardProfileKey(masterCardId, cardsDb);
+            return cards[cardProfileKey];
+        }
+
+        public void GrantCard(long masterCardId, int potentialCount, CardsContext cardsDb, ItemsContext itemsDb)
+        {
+            long cardProfileKey = NormalizeCardProfileKey(masterCardId, cardsDb);
             bool isNewCard = !cards.Keys.Contains(cardProfileKey);
 
             Card card;

@@ -44,11 +44,10 @@ namespace Yuyuyui.PrivateServer
 
             foreach (GachaContent rolledContent in rolledContents)
             {
-                long cardProfileKey = player.GetCardProfileKey(rolledContent.ContentId, cardsDb);
-                bool isNew = !player.cards.ContainsKey(cardProfileKey);
+                bool isNew = !player.HasCardForMasterId(rolledContent.ContentId, cardsDb);
                 player.GrantCard(rolledContent.ContentId, 1, cardsDb, itemsDb);
 
-                long userCardId = player.cards[cardProfileKey];
+                long userCardId = player.GetUserCardIdForMasterId(rolledContent.ContentId, cardsDb);
                 resultContents.Add(new ResultContent
                 {
                     item_category_id = 1,
