@@ -276,6 +276,7 @@ namespace Yuyuyui.PrivateServer
             public long? titleItemID { get; set; } = null;
             public int stamina { get; set; } = 140; // wip
             public int weekdayStamina { get; set; } = 6;
+            public bool birthdateRegistered { get; set; } = false;
 
             public long lastActive { get; set; } = 0; // unixtime
         }

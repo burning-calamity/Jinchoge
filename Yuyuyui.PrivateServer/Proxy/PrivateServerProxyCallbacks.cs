@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -45,6 +46,19 @@ namespace Yuyuyui.PrivateServer
                     headersAndBody.Item1,
                     headersAndBody.Item2,
                     $"{apiError.body}");
+                await entity.Process();
+            }
+            catch (Exception exception)
+            {
+                Utils.LogError(exception.ToString());
+                var headersAndBody = await ProxyUtils.GetRequestHeadersAndBody(e);
+
+                entity = new NoopEntity(
+                    e.HttpClient.Request.RequestUri,
+                    e.HttpClient.Request.Method,
+                    headersAndBody.Item1,
+                    headersAndBody.Item2,
+                    new RouteConfig(entity.RequestUri.AbsolutePath, e.HttpClient.Request.Method));
                 await entity.Process();
             }
 
