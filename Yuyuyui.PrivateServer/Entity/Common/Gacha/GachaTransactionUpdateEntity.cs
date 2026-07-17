@@ -342,11 +342,16 @@ namespace Yuyuyui.PrivateServer
                 GachaId = gachaId,
                 GachaBoxId = gachaId,
                 LotCount = IsTenRollLineup(lineupId) ? 10 : 1,
-                ConsumptionResourceId = 1,
+                ConsumptionResourceId = GetFallbackConsumptionResourceId(gachaId),
                 ConsumptionAmount = IsTenRollLineup(lineupId) ? 2500 : 250,
                 Sp = 1,
                 FreeRareGacha = 1
             };
+        }
+
+        private static int GetFallbackConsumptionResourceId(long gachaId)
+        {
+            return gachaId == 1 ? 3 : 1;
         }
 
         private static bool IsSyntheticFallbackLineup(long gachaId, long lineupId)

@@ -155,7 +155,7 @@ namespace Yuyuyui.PrivateServer
             {
                 id = gacha.Id * 100 + lotCount,
                 lot_count = lotCount,
-                consumption_resource_id = 1,
+                consumption_resource_id = GetFallbackConsumptionResourceId(gacha),
                 consumption_amount = amount,
                 consumable = true,
                 has_right = true,
@@ -166,6 +166,11 @@ namespace Yuyuyui.PrivateServer
                 bonus_description = null,
                 free_rare_gacha = 1
             };
+        }
+
+        private static int GetFallbackConsumptionResourceId(Gacha gacha)
+        {
+            return gacha.Kind == 1 ? 3 : 1;
         }
 
         private List<GachaProductData.PickupContent> GetGachaPickUps(Gacha gacha)
