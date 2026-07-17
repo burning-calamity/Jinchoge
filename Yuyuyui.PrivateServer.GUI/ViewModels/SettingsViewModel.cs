@@ -28,6 +28,7 @@ internal class SettingsViewModel : ViewModelBase
         privateServerRunning = false;
         updateStatus = "";
         infiniteItems = Config.Get().InGame.InfiniteItems;
+        unlockAllDifficulties = Config.Get().InGame.UnlockAllDifficulties;
         useOnlineDecryption = Config.Get().Security.UseOnlineDecryption;
 
         hasNewUpdate = false;
@@ -78,8 +79,7 @@ internal class SettingsViewModel : ViewModelBase
     public string SETTINGS_INFO_UNLOCK_ALL_DIFFICULTIES => Resources.SETTINGS_INFO_UNLOCK_ALL_DIFFICULTIES;
 
     public List<LanguageDisplay> InterfaceLanguages => Config.SupportedInterfaceLocale
-        .Select(CultureInfo.GetCultureInfo)
-        .Select(c => new LanguageDisplay(c))
+        .Select(LanguageDisplay.FromLocale)
         .ToList();
     public List<string> AvailableBranches => Config.SupportedUpdateChannel;
     public List<LanguageDisplay> ScenarioLanguages => Config.SupportedInGameScenarioLanguage
@@ -220,7 +220,21 @@ internal class SettingsViewModel : ViewModelBase
         public string DisplayName { get; set; }
         public string NativeName { get; set; }
 
-        public LanguageDisplay(CultureInfo culture)
+        public static LanguageDisplay FromLocale(string locale)
+        {
+            if (locale == Config.EnglishTestInterfaceLocale)
+                return new LanguageDisplay("English Test", "English Test");
+
+            return new LanguageDisplay(CultureInfo.GetCultureInfo(locale));
+        }
+
+        private LanguageDisplay(string displayName, string nativeName)
+        {
+            DisplayName = displayName;
+            NativeName = nativeName;
+        }
+
+        private LanguageDisplay(CultureInfo culture)
         {
             if (Equals(culture, CultureInfo.InvariantCulture))
             {
