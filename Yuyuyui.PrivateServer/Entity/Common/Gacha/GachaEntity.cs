@@ -80,10 +80,12 @@ namespace Yuyuyui.PrivateServer
         {
             var commonGacha = gachasDb.Gachas.ToList()
                 .Where(g => g.Kind == 0) // common gacha
-                .MaxBy(g => g.EndAt.ToDateTime());
-            commonGacha!.Name = "Private Server 勇者ガチャ";
-            commonGacha!.EndAt = "2028/12/31 18:59:59";
-            commonGacha!.NoDisplayEndAt = "1";
+                .OrderByDescending(g => g.EndAt.ToDateTime())
+                .FirstOrDefault();
+            commonGacha ??= CreateFallbackGacha(0, "Private Server 勇者ガチャ");
+            commonGacha.Name = "Private Server 勇者ガチャ";
+            commonGacha.EndAt = "2028/12/31 18:59:59";
+            commonGacha.NoDisplayEndAt = "1";
             return commonGacha;
         }
 
@@ -91,9 +93,25 @@ namespace Yuyuyui.PrivateServer
         {
             var friendGacha = gachasDb.Gachas.ToList()
                 .Where(g => g.Kind == 1) // friend gacha
-                .MaxBy(g => g.EndAt.ToDateTime());
-            friendGacha!.Name = "Private Server " + friendGacha.Name;
+                .OrderByDescending(g => g.EndAt.ToDateTime())
+                .FirstOrDefault();
+            friendGacha ??= CreateFallbackGacha(1, "Friend Gacha");
+            friendGacha.Name = "Private Server " + friendGacha.Name;
             return friendGacha;
+        }
+
+        private static Gacha CreateFallbackGacha(int kind, string name)
+        {
+            return new Gacha
+            {
+                Id = kind,
+                Name = name,
+                Description = "",
+                Kind = kind,
+                StartAt = "2020/01/01 00:00:00",
+                EndAt = "2028/12/31 18:59:59",
+                NoDisplayEndAt = "1"
+            };
         }
 
         private List<GachaProductData.Lineup> GetGachaLineups(GachasContext gachasDb, Gacha gacha)

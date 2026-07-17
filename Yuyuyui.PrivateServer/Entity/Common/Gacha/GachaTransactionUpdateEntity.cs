@@ -30,10 +30,13 @@ namespace Yuyuyui.PrivateServer
             using var cardsDb = new CardsContext();
             using var itemsDb = new ItemsContext();
 
-            GachaLineup lineup = gachasDb.GachaLineups
-                .First(l => l.Id == lineupId && l.GachaId == gachaId);
+            GachaLineup? lineup = gachasDb.GachaLineups
+                .FirstOrDefault(l => l.Id == lineupId && l.GachaId == gachaId)
+                ?? gachasDb.GachaLineups.FirstOrDefault(l => l.GachaId == gachaId)
+                ?? gachasDb.GachaLineups.FirstOrDefault(l => l.Id == lineupId)
+                ?? gachasDb.GachaLineups.FirstOrDefault();
 
-            IList<GachaContent> rolledContents = RollCards(gachasDb, lineup);
+            IList<GachaContent> rolledContents = RollCards(gachasDb, cardsDb, lineup);
             IList<ResultContent> resultContents = new List<ResultContent>();
 
             foreach (GachaContent rolledContent in rolledContents)
@@ -67,19 +70,36 @@ namespace Yuyuyui.PrivateServer
             return Task.CompletedTask;
         }
 
-        private static IList<GachaContent> RollCards(GachasContext gachasDb, GachaLineup lineup)
+        private static IList<GachaContent> RollCards(GachasContext gachasDb, CardsContext cardsDb, GachaLineup? lineup)
         {
-            List<GachaContent> cardPool = gachasDb.GachaContents
-                .Where(c => c.GachaBoxId == lineup.GachaBoxId)
-                .Where(c => c.ContentType == "Card" || c.Category == 1)
-                .Where(c => c.Weight > 0)
-                .ToList();
+            List<GachaContent> cardPool = lineup == null
+                ? new List<GachaContent>()
+                : gachasDb.GachaContents
+                    .Where(c => c.GachaBoxId == lineup.GachaBoxId)
+                    .Where(c => c.ContentType == "Card" || c.Category == 1)
+                    .Where(c => c.Weight > 0)
+                    .ToList();
 
             if (cardPool.Count == 0)
-                throw new InvalidOperationException($"Gacha box {lineup.GachaBoxId} does not contain rollable cards.");
+            {
+                cardPool = cardsDb.Cards
+                    .Select(c => new GachaContent
+                    {
+                        GachaBoxId = lineup?.GachaBoxId ?? 0,
+                        Category = 1,
+                        ContentId = c.Id,
+                        ContentType = "Card",
+                        Weight = 1
+                    })
+                    .ToList();
+            }
 
+            if (cardPool.Count == 0)
+                return new List<GachaContent>();
+
+            int lotCount = Math.Max(lineup?.LotCount ?? 1, 1);
             List<GachaContent> results = new();
-            for (int i = 0; i < lineup.LotCount; i++)
+            for (int i = 0; i < lotCount; i++)
                 results.Add(RollOne(cardPool));
 
             return results;

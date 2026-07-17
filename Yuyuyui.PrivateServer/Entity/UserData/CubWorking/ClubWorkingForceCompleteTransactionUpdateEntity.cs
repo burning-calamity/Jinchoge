@@ -20,12 +20,14 @@ namespace Yuyuyui.PrivateServer
         protected override Task ProcessRequest()
         {
             var player = GetPlayerFromCookies();
+            EnsureClubWorkingSlots(player);
             long clubWorkingId = long.Parse(GetPathParameter("club_working_id"));
             long transactionId = long.Parse(GetPathParameter("transaction_id"));
 
             ClubWorkingSlot slot = player.clubWorkingSlots
                 .Select(ClubWorkingSlot.Load)
-                .First(s => s.club_working_id == clubWorkingId);
+                .FirstOrDefault(s => s.club_working_id == clubWorkingId)
+                ?? CreateAdditionalSlot(player);
 
             slot.finishment_time = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             slot.Save();
@@ -43,6 +45,30 @@ namespace Yuyuyui.PrivateServer
             SetBasicResponseHeaders();
 
             return Task.CompletedTask;
+        }
+
+        private static void EnsureClubWorkingSlots(PlayerProfile player)
+        {
+            if (player.clubWorkingSlots.Count != 0) return;
+
+            player.clubWorkingSlots = new List<long>(3);
+            for (int i = 0; i < 3; ++i)
+            {
+                var newSlot = ClubWorkingSlot.NewEmptySlot();
+                player.clubWorkingSlots.Add(newSlot.id);
+                newSlot.Save();
+            }
+
+            player.Save();
+        }
+
+        private static ClubWorkingSlot CreateAdditionalSlot(PlayerProfile player)
+        {
+            var newSlot = ClubWorkingSlot.NewEmptySlot();
+            player.clubWorkingSlots.Add(newSlot.id);
+            newSlot.Save();
+            player.Save();
+            return newSlot;
         }
 
         public class Response
