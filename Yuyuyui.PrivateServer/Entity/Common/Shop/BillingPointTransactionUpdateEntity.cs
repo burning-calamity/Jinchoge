@@ -11,7 +11,16 @@ namespace Yuyuyui.PrivateServer
 
         protected override Task ProcessRequest()
         {
+            var player = GetPlayerFromCookies();
             long transactionId = long.Parse(GetPathParameter("transaction_id"));
+
+            if (RequestUri.AbsolutePath.Contains("weekday_stamina_recovery"))
+                player.data.weekdayStamina = Math.Max(player.data.weekdayStamina, 6);
+            else if (RequestUri.AbsolutePath.Contains("stamina_recovery"))
+                player.data.stamina = Math.Max(player.data.stamina, 140);
+
+            player.Save();
+
             responseBody = Serialize(new Response { transaction = new Transaction { id = transactionId }, completed = true });
             SetBasicResponseHeaders();
             return Task.CompletedTask;

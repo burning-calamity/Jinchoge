@@ -18,6 +18,10 @@ namespace Yuyuyui.PrivateServer
 
         protected override Task ProcessRequest()
         {
+            var player = GetPlayerFromCookies();
+            player.data.birthdateRegistered = true;
+            player.Save();
+
             responseBody = Serialize(new Response());
             SetBasicResponseHeaders();
             return Task.CompletedTask;
