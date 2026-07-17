@@ -82,10 +82,11 @@ namespace Yuyuyui.PrivateServer
 
             if (cardPool.Count == 0)
             {
+                long fallbackGachaBoxId = lineup == null ? 0 : lineup.GachaBoxId;
                 cardPool = cardsDb.Cards
                     .Select(c => new GachaContent
                     {
-                        GachaBoxId = lineup?.GachaBoxId ?? 0,
+                        GachaBoxId = fallbackGachaBoxId,
                         Category = 1,
                         ContentId = c.Id,
                         ContentType = "Card",

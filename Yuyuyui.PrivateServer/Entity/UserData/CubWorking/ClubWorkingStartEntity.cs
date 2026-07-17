@@ -36,7 +36,7 @@ namespace Yuyuyui.PrivateServer
             slot.primary_user_card_id = request.primary_user_card_id;
             slot.secondary_user_card_id = request.secondary_user_card_id;
             slot.club_order_master_id = request.club_order_master_id;
-            slot.finishment_time = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            slot.finishment_time = Utils.CurrentUnixTime() - 1;
             slot.Save();
 
             Response responseObj = new()

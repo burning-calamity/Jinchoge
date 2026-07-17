@@ -29,7 +29,7 @@ namespace Yuyuyui.PrivateServer
                 .FirstOrDefault(s => s.club_working_id == clubWorkingId)
                 ?? CreateAdditionalSlot(player);
 
-            slot.finishment_time = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            slot.finishment_time = Utils.CurrentUnixTime() - 1;
             slot.Save();
 
             Response responseObj = new()
