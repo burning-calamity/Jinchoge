@@ -134,13 +134,17 @@ namespace Yuyuyui.PrivateServer
                 }
             }
 
-            Utils.LogWarning(Resources.LOG_PS_API_NOT_IMPLEMENTED + $"{e.HttpClient.Request.Method} {apiPath}");
-            return new NoopEntity(
+            string notImplementedMessage = $"{Resources.LOG_PS_API_NOT_IMPLEMENTED}{e.HttpClient.Request.Method} {apiPath}";
+            Utils.LogWarning(notImplementedMessage);
+            return new RequestErrorEntity(
+                "A1321",
+                notImplementedMessage,
                 e.HttpClient.Request.RequestUri,
                 e.HttpClient.Request.Method,
-                new Dictionary<string, string>(),
-                Array.Empty<byte>(),
-                new RouteConfig(apiPath, e.HttpClient.Request.Method));
+                new RouteConfig(apiPath, e.HttpClient.Request.Method),
+                headersAndBody.Item1,
+                headersAndBody.Item2,
+                notImplementedMessage);
         }
 
         protected abstract Task ProcessRequest();
