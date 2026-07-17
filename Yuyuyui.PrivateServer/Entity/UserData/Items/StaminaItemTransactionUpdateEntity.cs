@@ -66,11 +66,15 @@ namespace Yuyuyui.PrivateServer
 
         private static Item? ResolveUserItem(PlayerProfile player, long staminaItemId)
         {
-            if (Item.Exists(staminaItemId))
-                return Item.Load(staminaItemId);
+            if (player.items.stamina.TryGetValue(staminaItemId, out long userItemId) && Item.Exists(userItemId))
+                return Item.Load(userItemId);
 
-            return player.items.stamina.TryGetValue(staminaItemId, out long userItemId) && Item.Exists(userItemId)
-                ? Item.Load(userItemId)
+            if (!player.items.stamina.ContainsValue(staminaItemId) || !Item.Exists(staminaItemId))
+                return null;
+
+            Item item = Item.Load(staminaItemId);
+            return player.items.stamina.TryGetValue(item.master_id, out long mappedItemId) && mappedItemId == staminaItemId
+                ? item
                 : null;
         }
 

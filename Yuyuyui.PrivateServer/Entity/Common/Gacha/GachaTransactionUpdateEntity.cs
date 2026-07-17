@@ -269,9 +269,11 @@ namespace Yuyuyui.PrivateServer
                 1 => DeductBillingPoint(player, amount),
                 2 => DeductFreeBlessing(player, amount),
                 3 => DeductFriendPoint(player, amount),
+                4 => DeductGameCoinPoint(player, amount),
                 6 or 7 => DeductGachaTicket(player, gachasDb, lineup, amount),
                 8 => DeductBraveCoin(player, amount),
                 21 => DeductExchangePoint(player, amount),
+                2001 => true,
                 _ => false
             };
 
@@ -315,6 +317,15 @@ namespace Yuyuyui.PrivateServer
                 return false;
 
             player.data.friendPoint -= amount;
+            return true;
+        }
+
+        private static bool DeductGameCoinPoint(PlayerProfile player, int amount)
+        {
+            if (player.data.money < amount)
+                return false;
+
+            player.data.money -= amount;
             return true;
         }
 
