@@ -457,18 +457,18 @@ namespace Yuyuyui.PrivateServer
                 typeof(UpdateUserSelectEntity),
                 new RouteConfig("/select_gachas/update_user_select", "POST")
             },
-            //{
-            //	typeof(GachaTicketEntity),
-            //	new Config("/my/gacha_tickets", "Json/Gacha/ticket", 0)
-            //},
-            //{
-            //	typeof(GachaTransactionCreateEntity),
-            //	new Config("/gachas/{0}/lineups/{1}/transactions", "Json/Gacha/transaction_create", 0)
-            //},
-            //{
-            //	typeof(GachaTransactionUpdateEntity),
-            //	new Config("/gachas/{0}/lineups/{1}/transactions/{2}", "Json/Gacha/transaction_update", 0)
-            //},
+            {
+                typeof(GachaTicketEntity),
+                new RouteConfig("/my/gacha_tickets", "GET")
+            },
+            {
+                typeof(GachaTransactionCreateEntity),
+                new RouteConfig("/gachas/{gacha_id}/lineups/{lineup_id}/transactions", "POST")
+            },
+            {
+                typeof(GachaTransactionUpdateEntity),
+                new RouteConfig("/gachas/{gacha_id}/lineups/{lineup_id}/transactions/{transaction_id}", "PUT")
+            },
             {
                 typeof(PresentsEntity),
                 new RouteConfig("/my/gifts", "GET")
@@ -513,22 +513,22 @@ namespace Yuyuyui.PrivateServer
                 typeof(ClubWorkingOrderEntity),
                 new RouteConfig("/my/club_working/orders", "GET")
             },
-            //{
-            //	typeof(ClubWorkingStartEntity),
-            //	new Config("/my/club_working/workings/start", "Json/ClubWorking/Start", 0)
-            //},
-            //{
-            //	typeof(ClubWorkingRewardEntity),
-            //	new Config("/my/club_working/workings/{0}/result", "Json/ClubWorking/Reward", 0)
-            //},
-            //{
-            //	typeof(ClubWorkingForceCompleteTransactionCreateEntity),
-            //	new Config("/my/club_working/workings/{0}/transactions", "Json/ClubWorking/complete_transaction_create", 0)
-            //},
-            //{
-            //	typeof(ClubWorkingForceCompleteTransactionUpdateEntity),
-            //	new Config("/my/club_working/workings/{0}/transactions/{1}", "Json/ClubWorking/complete_transaction_update", 0)
-            //},
+            {
+                typeof(ClubWorkingStartEntity),
+                new RouteConfig("/my/club_working/workings/start", "POST")
+            },
+            {
+                typeof(ClubWorkingRewardEntity),
+                new RouteConfig("/my/club_working/workings/{club_working_id}/result", "PUT")
+            },
+            {
+                typeof(ClubWorkingForceCompleteTransactionCreateEntity),
+                new RouteConfig("/my/club_working/workings/{club_working_id}/transactions", "POST")
+            },
+            {
+                typeof(ClubWorkingForceCompleteTransactionUpdateEntity),
+                new RouteConfig("/my/club_working/workings/{club_working_id}/transactions/{transaction_id}", "PUT")
+            },
             {
                 typeof(UserInfoEntity),
                 new RouteConfig("/users/{user_id}", "GET")
