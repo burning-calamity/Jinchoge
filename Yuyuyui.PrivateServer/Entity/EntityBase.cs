@@ -556,11 +556,27 @@ namespace Yuyuyui.PrivateServer
             },
             {
                 typeof(MissionListEntity),
+                new RouteConfig("/missions", "GET")
+            },
+            {
+                typeof(MissionListEntity),
                 new RouteConfig("/my/missions", "GET")
             },
             {
                 typeof(DailyMissionListEntity),
+                new RouteConfig("/daily_missions", "GET")
+            },
+            {
+                typeof(DailyMissionListEntity),
                 new RouteConfig("/my/daily_missions", "GET")
+            },
+            {
+                typeof(MissionListEntity),
+                new RouteConfig("/mission_adventures", "GET")
+            },
+            {
+                typeof(MissionListEntity),
+                new RouteConfig("/my/mission_adventures", "GET")
             },
             {
                 typeof(MissionUpdateEntity),

@@ -18,6 +18,8 @@ namespace Yuyuyui.PrivateServer
 
         public class Response
         {
+            public bool accepted { get; set; } = true;
+            public bool completed { get; set; } = true;
             public IList<object> daily_missions { get; set; } = new List<object>();
         }
     }
